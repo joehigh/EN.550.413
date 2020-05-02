@@ -1,0 +1,68 @@
+#Problem 3, Part a
+library(SemiPar)
+data("sausage")
+summary(sausage)
+calorie<-sausage$calories;
+sodium<-sausage$sodium
+txx<-sum((sodium - mean(sodium))^2)
+beta1.hat<-sum((sodium - mean(sodium))*calorie)/txx
+beta0.hat<-mean(calorie)-(beta1.hat*mean(sodium))
+plot(sodium,calorie)
+curve(beta0.hat + beta1.hat*x, seq(min(sodium), max(sodium), by=1), add = TRUE)
+
+#Part b
+#H0: beta1.hat = 0 no linear association between sodium and calorie content
+#H1: beta1.hat !=0 there is a linear association between sodium and calorie
+dof<-(length(calorie)-2)
+residuals<-(calorie-beta0.hat-beta1.hat*sodium)
+MSE<-(1/dof)*sum((residuals)^2)
+s2.beta1hat<-(MSE/txx)
+s.beta1hat<-(s2.beta1hat)^(1/2)
+tstat<-beta1.hat/s.beta1hat
+alpha<-0.05
+qt(c(alpha/2, 1-(alpha/2)), df=dof) #52 degrees of freedom
+#We test the null hypothesis on a two-sided hypothesis test.
+#0.05 level of significance, i.e. a 95% confidence interval.
+#Our confidence interval: (-2.006647, 2.006647); tstat=3.80982314149285
+#Because absolutevalue(between) > (-2.006647, 2.006647), we reject H0
+#Thus, there is a linear association between sodium and calorie.
+
+#Part c
+Y1<-beta0.hat+beta1.hat*(350)
+Y2<-beta0.hat+beta1.hat*(520)
+Y3<-beta0.hat+beta1.hat*(441)
+A1<-(1+(1/54)+(((350-mean(sodium))^2)/(txx)))^(1/2)
+B1<-qt(0.975, df=dof)*((MSE)^(1/2))*A1
+lower1<-Y1-B1
+upper1<-Y1+B1
+#Prediction Interval for 350mg sodium: (81.3123673016178, 188.145057056183)
+A2<-(1+(1/54)+(((520-mean(sodium))^2)/txx))^(1/2)
+B2<-qt(0.975, df=dof)*((MSE)^(1/2))*A2
+lower2<-Y2-B2
+upper2<-Y2+B2
+#Prediction Interval for 520mg sodium: (105.471720791996, 212.671881342442)
+A3<-(1+(1/54)+(((441-mean(sodium))^2)/txx))^(1/2)
+B3<-qt(0.975, df=dof)*((MSE)^(1/2))*A3
+lower3<-Y3-B3
+upper3<-Y3+B3
+#Prediction Interval for 441mg sodium: (94.6280991189149, 200.890749813439)
+#Conclusion:
+# X*         fit                  lower                  upper 
+# 350    134.7287121789      81.3123673016178       188.145057056183
+# 441    159.071801067219    105.471720791996       212.671881342442
+# 520    147.759424466177    94.6280991189149       200.890749813439
+
+#Part d
+s.Yhat<-((MSE)^(1/2))*((1/length(calorie))+(((sodium-mean(sodium))^2)/txx))^(1/2)
+W2<-2*qf(.95, 2, dof)
+W1<-sqrt(W2)<-(s.Yhat)*W1
+boundaryvalues<-W1*(s.Yhat)
+upperband<-beta0.hat+beta1.hat*(sodium)+boundaryvalues
+lowerband<-beta0.hat+beta1.hat*(sodium)-boundaryvalues
+
+#Plot of the Working-Hotelling 95% confidence bands for our regression line
+sodiumseq<-order(sodium)
+lines(sodium[sodiumseq], lowerband[sodiumseq], col="red")
+lines(sodium[sodiumseq], upperband[sodiumseq], col="red")
+
+#Problem 4

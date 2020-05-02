@@ -1,0 +1,119 @@
+#Problem 1
+library(faraway)
+data("cars")
+summary(cars)
+Y<-cars$dist
+X<-cars$speed
+txy<-sum((X-mean(X))*(Y-mean(Y)))
+txx<-sum((X-mean(X))^2)
+beta1.hat<-txy/txx
+beta0.hat<-mean(Y)-beta1.hat*mean(X)
+Yhat<-beta0.hat+beta1.hat*X
+residuals<-Y-Yhat
+n<-length(X)
+dof<-n-2
+SSE<-sum((residuals)^2)
+MSE<-(1/dof)*SSE
+std.residuals<-residuals/sqrt(MSE)
+layout(matrix(c(1,0,2,3), 2, 2, byrow = TRUE), widths = c(1,1), heights = c(1,1))
+plot(X,Y, main="Fitted Regression Plot")
+curve(beta0.hat + beta1.hat*x, seq(min(X), max(Y), by=1), add=TRUE)
+plot(X,std.residuals, ylab="Residuals", main="Residual Plot against X")
+curve(0+0*x, seq(min(X), max(std.residuals)),add = TRUE, lty=2, col="red")
+theoretical<-qnorm((1:length(std.residuals)/(length(std.residuals)+1)))
+plot(sort(theoretical),sort(std.residuals), xlab = "Theoretical", ylab = "Residual", main = "Q-Q Plot")
+abline(0,1)
+#The Residual plot suggests a nonconstant variance as does the Q-Q Plot. 
+#As x increases, the modulus of the residual values increase.
+#It is clear from the QQ-Plot that there is clear departure from normality. 
+#That is to say that the error terms are not normally distributed.
+#Now we implement a more robust method to test of constancy of variance
+#Brown-Forsythe/modified Levene test (from lawstat package):
+library(lawstat)
+levene.test(std.residuals, group = (Y >= 45), location= "median")
+#[1] t.BF = 5.918 and a p-value = 0.01876
+alpha<-0.05
+tstat<-qt(1-(alpha/2),df=dof)
+#[1] t.BF = 5.918 > tstat = 2.010635 and p-value=0.01876 < alpha=0.05.
+#Thus, we reject the null Hypothesis at 5% significance level. 
+#i.e. The variance of the error terms are non-constant and depend on x.
+
+#Part 2) Now to test for Normality
+#Null Hypothesis, H0: The error terms are normally distributed.
+#Chosen alpha = 0.05
+library(nortest)
+shapiro.test(residuals)
+#Shapiro-Wilk Normality Test Data:
+#p-value = 0.02152, test statistics W = 0.94509
+#at the 5% significance level, we reject the null hypothesis
+#That is, the error terms are not normally distributed.
+
+#Part 3) Outlier Testing
+#First, we compute the externally standardized residuals
+hi<-(1/n)+(((X-mean(X))^2)/(txx))
+extstd.residuals<-residuals*((n-3)/(SSE*(1-hi)-(residuals)^2))^(1/2)
+p.values<-2*pt(abs(extstd.residuals), df = n-3, lower.tail = FALSE)
+#Outlier Test using Bonferroni Corrections
+reject<-p.values < alpha/n
+plot(p.values, col=ifelse(reject, "red", "black"), main = "Outlier Test: p-value plot")
+#Under Bonferroni Corrections, there are no p-values < 0.05/50 = 0.001
+#Thus, no obvious outliers
+
+#Outlier Test using Benjamini-Hochberg procedure
+index<-(1:n)
+reject.BH<-sort(p.values) < index*alpha/n
+#Under the BH procedure, there is no k such that pvalue(k) < k*alpha/n 
+#where alpha = 0.05 and n=50.
+#Thus, no apparent outliers in the data.
+
+
+#Part 4) Goodness of Fit
+SSTO<-sum((Y-mean(Y))^2)
+R2<-1-(SSE/SSTO)
+#The coefficient of determintation, R^2 value, is 0.6511. 
+#The R^2 value suggests that there is departure from a linear association 
+#but there are signs of a linear relationship
+#i.e. 65% of the variation in the response variables (Y) can be explained by our regression model.
+
+#Now to make inferences of the linear association with our beta1 estimate
+#H0: true beta1 = 0, no linear association
+s2.beta1hat<-MSE/txx
+s.beta1hat<-(s2.beta1hat)^(1/2)
+teststat.b1<-beta1.hat/s.beta1hat
+tcritical<-qt(1-(alpha/2), df=n-2)
+#our critical t-value = 2.010635 and our test statistic = 9.463990
+#Thus, abs(teststat.b1) > t.critical. We reject H0 and claim that there is a linear association.
+
+#Now to test for the absence of correlation
+#Running a Hypothesis test on Pearson's Correlation Coefficient, rho.hat
+rho.hat<-txy/((txx*SSTO)^(1/2)) #This can also be computed by taking the sqrt of R2
+#We first notice that rho.hat=0.8068949, suggesting a strong to moderate linear association.
+#With H0: true rho = 0, implying that X and Y are independent and thus no correlation.
+pearson.tstat<-(rho.hat*(n-2)^(1/2))/(1-rho.hat^2)^(1/2)
+p.value2<-2*pt(abs(pearson.tstat), df=n-2, lower.tail = FALSE)
+#Pearson Test statistics = 9.463990 < tcritical = 2.010635
+#p.value < alpha = 0.05. 
+#The null hypothesis can be rejected at all levels of significance.
+#Thus, there is a strong correlation.
+
+#Lastly, we test for lack of fit
+uniq.X<-unique(X)
+Y.mean<-numeric(length(uniq.X))
+for(i in 1:length(uniq.X)) {Y.mean[i]<-mean(Y[X==uniq.X[i]])}
+SSPE.partial<-numeric(length(uniq.X))
+for(i in 1:length(uniq.X)) {SSPE.partial[i]<-sum((Y[X==uniq.X[i]] - Y.mean[i])^2)}
+SSPE<-sum(SSPE.partial)
+SSER<-sum(residuals^2) #equivalent to SSE
+k<-length(uniq.X)
+df.F<-n-k
+df.R<-n-2
+F.stat<-((SSER-SSPE)*(df.F))/((df.R - df.F)*SSPE)
+#F.stat = 1.23694991825985
+#We will use the same alpha as we have been (alpha = 0.05)
+F.critical<-qf(1-alpha, df.R - df.F, df.F)
+#F.critical = 1.964575
+F.pvalue<-pf(F.stat, df.R - df.F, df.F, lower.tail = FALSE)
+#p-value of 0.294837396797045
+#F.stat < F.critical and p-value > alpha = 0.05 
+#Thus, we conclude the null, H0, that the regression function is linear
+#and that the data is a good fit.

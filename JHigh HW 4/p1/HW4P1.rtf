@@ -1,0 +1,440 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1504\cocoasubrtf600
+{\fonttbl\f0\fnil\fcharset0 Menlo-Regular;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;\csgray\c100000;}
+\margl1440\margr1440\vieww10800\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf0 > #Problem 1\
+> library(faraway)\
+> library(leaps)\
+> library(MASS)\
+> data("prostate")\
+> \
+> #Part 1\
+> #The following is the best subset of the predictor variables for predicting the response, lpsa,\
+> #in the prostate data. The regsubsets function will be used for this (from the leaps package).\
+> bs<-regsubsets(lpsa ~ ., data = prostate)\
+> (rs <-summary(bs))\
+Subset selection object\
+Call: regsubsets.formula(lpsa ~ ., data = prostate)\
+8 Variables  (and intercept)\
+        Forced in Forced out\
+lcavol      FALSE      FALSE\
+lweight     FALSE      FALSE\
+age         FALSE      FALSE\
+lbph        FALSE      FALSE\
+svi         FALSE      FALSE\
+lcp         FALSE      FALSE\
+gleason     FALSE      FALSE\
+pgg45       FALSE      FALSE\
+1 subsets of each size up to 8\
+Selection Algorithm: exhaustive\
+         lcavol lweight age lbph svi lcp gleason pgg45\
+1  ( 1 ) "*"    " "     " " " "  " " " " " "     " "  \
+2  ( 1 ) "*"    "*"     " " " "  " " " " " "     " "  \
+3  ( 1 ) "*"    "*"     " " " "  "*" " " " "     " "  \
+4  ( 1 ) "*"    "*"     " " "*"  "*" " " " "     " "  \
+5  ( 1 ) "*"    "*"     "*" "*"  "*" " " " "     " "  \
+6  ( 1 ) "*"    "*"     "*" "*"  "*" " " " "     "*"  \
+7  ( 1 ) "*"    "*"     "*" "*"  "*" "*" " "     "*"  \
+8  ( 1 ) "*"    "*"     "*" "*"  "*" "*" "*"     "*"  \
+> #This table shows the best subset of predictor variables for each corresponding number of\
+> #predictor variables.\
+> #In parts (a)-(d), we will use this best subset table for 4 different Variable Selection procedures.\
+> \
+> #(a): Backward Elimination\
+> #Set our threshold alpha, alpha.out = 0.1\
+> g<-lm(formula = lpsa ~ ., data = prostate)\
+> summary(g)\
+\
+Call:\
+lm(formula = lpsa ~ ., data = prostate)\
+\
+Residuals:\
+    Min      1Q  Median      3Q     Max \
+-1.7331 -0.3713 -0.0170  0.4141  1.6381 \
+\
+Coefficients:\
+             Estimate Std. Error t value Pr(>|t|)    \
+(Intercept)  0.669337   1.296387   0.516  0.60693    \
+lcavol       0.587022   0.087920   6.677 2.11e-09 ***\
+lweight      0.454467   0.170012   2.673  0.00896 ** \
+age         -0.019637   0.011173  -1.758  0.08229 .  \
+lbph         0.107054   0.058449   1.832  0.07040 .  \
+svi          0.766157   0.244309   3.136  0.00233 ** \
+lcp         -0.105474   0.091013  -1.159  0.24964    \
+gleason      0.045142   0.157465   0.287  0.77503    \
+pgg45        0.004525   0.004421   1.024  0.30886    \
+---\
+Signif. codes:  0 \'91***\'92 0.001 \'91**\'92 0.01 \'91*\'92 0.05 \'91.\'92 0.1 \'91 \'92 1\
+\
+Residual standard error: 0.7084 on 88 degrees of freedom\
+Multiple R-squared:  0.6548,	Adjusted R-squared:  0.6234 \
+F-statistic: 20.86 on 8 and 88 DF,  p-value: < 2.2e-16\
+\
+> #Since the p-value for gleason is the greatest p-value greater than alpha.out = 0.1, we remove\
+> #gleason predictor variable first.\
+> g2<-update(g, . ~ . - gleason)\
+> summary(g2)\
+\
+Call:\
+lm(formula = lpsa ~ lcavol + lweight + age + lbph + svi + lcp + \
+    pgg45, data = prostate)\
+\
+Residuals:\
+     Min       1Q   Median       3Q      Max \
+-1.73117 -0.38137 -0.01728  0.43364  1.63513 \
+\
+Coefficients:\
+             Estimate Std. Error t value Pr(>|t|)    \
+(Intercept)  0.953926   0.829439   1.150  0.25319    \
+lcavol       0.591615   0.086001   6.879 8.07e-10 ***\
+lweight      0.448292   0.167771   2.672  0.00897 ** \
+age         -0.019336   0.011066  -1.747  0.08402 .  \
+lbph         0.107671   0.058108   1.853  0.06720 .  \
+svi          0.757734   0.241282   3.140  0.00229 ** \
+lcp         -0.104482   0.090478  -1.155  0.25127    \
+pgg45        0.005318   0.003433   1.549  0.12488    \
+---\
+Signif. codes:  0 \'91***\'92 0.001 \'91**\'92 0.01 \'91*\'92 0.05 \'91.\'92 0.1 \'91 \'92 1\
+\
+Residual standard error: 0.7048 on 89 degrees of freedom\
+Multiple R-squared:  0.6544,	Adjusted R-squared:  0.6273 \
+F-statistic: 24.08 on 7 and 89 DF,  p-value: < 2.2e-16\
+\
+> #the marginal p-value of the lcp predictor variable is the greatest p-value greater than alpha.out.\
+> #Thus, we remove the lcp variable:\
+> \
+> g3<-update(g2, . ~ . - lcp)\
+> summary(g3)\
+\
+Call:\
+lm(formula = lpsa ~ lcavol + lweight + age + lbph + svi + pgg45, \
+    data = prostate)\
+\
+Residuals:\
+     Min       1Q   Median       3Q      Max \
+-1.77711 -0.41708  0.00002  0.40676  1.59681 \
+\
+Coefficients:\
+             Estimate Std. Error t value Pr(>|t|)    \
+(Intercept)  0.980085   0.830665   1.180  0.24116    \
+lcavol       0.545770   0.076431   7.141 2.31e-10 ***\
+lweight      0.449450   0.168078   2.674  0.00890 ** \
+age         -0.017470   0.010967  -1.593  0.11469    \
+lbph         0.105755   0.058191   1.817  0.07249 .  \
+svi          0.641666   0.219757   2.920  0.00442 ** \
+pgg45        0.003528   0.003068   1.150  0.25331    \
+---\
+Signif. codes:  0 \'91***\'92 0.001 \'91**\'92 0.01 \'91*\'92 0.05 \'91.\'92 0.1 \'91 \'92 1\
+\
+Residual standard error: 0.7061 on 90 degrees of freedom\
+Multiple R-squared:  0.6493,	Adjusted R-squared:  0.6259 \
+F-statistic: 27.77 on 6 and 90 DF,  p-value: < 2.2e-16\
+\
+> #We now remove pgg45 variable:\
+> \
+> g4<-update(g3, . ~ . - pgg45)\
+> summary(g4)\
+\
+Call:\
+lm(formula = lpsa ~ lcavol + lweight + age + lbph + svi, data = prostate)\
+\
+Residuals:\
+     Min       1Q   Median       3Q      Max \
+-1.83505 -0.39396  0.00414  0.46336  1.57888 \
+\
+Coefficients:\
+            Estimate Std. Error t value Pr(>|t|)    \
+(Intercept)  0.95100    0.83175   1.143 0.255882    \
+lcavol       0.56561    0.07459   7.583 2.77e-11 ***\
+lweight      0.42369    0.16687   2.539 0.012814 *  \
+age         -0.01489    0.01075  -1.385 0.169528    \
+lbph         0.11184    0.05805   1.927 0.057160 .  \
+svi          0.72095    0.20902   3.449 0.000854 ***\
+---\
+Signif. codes:  0 \'91***\'92 0.001 \'91**\'92 0.01 \'91*\'92 0.05 \'91.\'92 0.1 \'91 \'92 1\
+\
+Residual standard error: 0.7073 on 91 degrees of freedom\
+Multiple R-squared:  0.6441,	Adjusted R-squared:  0.6245 \
+F-statistic: 32.94 on 5 and 91 DF,  p-value: < 2.2e-16\
+\
+> #Remove age predictor variable next since its marginal p-value > alpha.out = 0.1\
+> \
+> g5<-update(g4, . ~ . - age)\
+> summary(g5)\
+\
+Call:\
+lm(formula = lpsa ~ lcavol + lweight + lbph + svi, data = prostate)\
+\
+Residuals:\
+     Min       1Q   Median       3Q      Max \
+-1.82653 -0.42270  0.04362  0.47041  1.48530 \
+\
+Coefficients:\
+            Estimate Std. Error t value Pr(>|t|)    \
+(Intercept)  0.14554    0.59747   0.244  0.80809    \
+lcavol       0.54960    0.07406   7.422 5.64e-11 ***\
+lweight      0.39088    0.16600   2.355  0.02067 *  \
+lbph         0.09009    0.05617   1.604  0.11213    \
+svi          0.71174    0.20996   3.390  0.00103 ** \
+---\
+Signif. codes:  0 \'91***\'92 0.001 \'91**\'92 0.01 \'91*\'92 0.05 \'91.\'92 0.1 \'91 \'92 1\
+\
+Residual standard error: 0.7108 on 92 degrees of freedom\
+Multiple R-squared:  0.6366,	Adjusted R-squared:  0.6208 \
+F-statistic: 40.29 on 4 and 92 DF,  p-value: < 2.2e-16\
+\
+> #The marginal p-value for lbph > alpha.out = 0.1. We remove lbph predictor variable:\
+> \
+> g6<-update(g5, . ~ . -lbph)\
+> summary(g6)\
+\
+Call:\
+lm(formula = lpsa ~ lcavol + lweight + svi, data = prostate)\
+\
+Residuals:\
+     Min       1Q   Median       3Q      Max \
+-1.72964 -0.45764  0.02812  0.46403  1.57013 \
+\
+Coefficients:\
+            Estimate Std. Error t value Pr(>|t|)    \
+(Intercept) -0.26809    0.54350  -0.493  0.62298    \
+lcavol       0.55164    0.07467   7.388  6.3e-11 ***\
+lweight      0.50854    0.15017   3.386  0.00104 ** \
+svi          0.66616    0.20978   3.176  0.00203 ** \
+---\
+Signif. codes:  0 \'91***\'92 0.001 \'91**\'92 0.01 \'91*\'92 0.05 \'91.\'92 0.1 \'91 \'92 1\
+\
+Residual standard error: 0.7168 on 93 degrees of freedom\
+Multiple R-squared:  0.6264,	Adjusted R-squared:  0.6144 \
+F-statistic: 51.99 on 3 and 93 DF,  p-value: < 2.2e-16\
+\
+> #The remaining predictor variables have marginal p-values that are significantly less than \
+> #the threshold alpha.out = 0.1, so no other predictor variables will be removed. \
+> #By the Backward Elimination criterion, with threshold alpha.out = 0.1, our best subset of \
+> #predictor variables is \{lcavol, lweight, svi\} and the fitted model is\
+> #lpsa = -0.26809 + 0.55164*lcavol + 0.50854*lweight + 0.66616*svi\
+> \
+> #(b): AIC\
+> #First, I will plot the AIC value against the number of predictor variables. Next, I will \
+> #implement stepwise regression via AIC criterion.\
+> \
+> n<-nrow(prostate)\
+> AIC.p<-n*log(rs$rss/n) + 2*(2:9)\
+> plot(2:9, AIC.p , main = "AIC against # of Predictors",\
++      xlab = "(p) Number of Predictors (including the intercept)", ylab = "AIC")\
+> #The minimum AIC value appears to be at p = 5 or p = 6 (or 4 or 5 predictors since intercept is\
+> #is included). To be sure, we use which.min function to locate where the minimum occurs.\
+> \
+> min(AIC.p)\
+[1] -61.37439\
+> # minimum AIC value = -61.37439\
+> which.min(AIC.p)\
+[1] 5\
+> # p = 5\
+> \
+> #The minimum occurs at p = 5. Because it includes the intercept term, we attain the minimum AIC.p\
+> #value with 4 predictor variables. According to the AIC criterion, 4 predictor variables is optimal.\
+> \
+> #If we refer to our Best Subsets data table (bs) above, we see that the best subset of 4 predictor \
+> #variables is \{lcavol, lweight, lbph, svi\}.\
+> \
+> #Stepwise with AIC, starting from full model:\
+> g.full<-lm(lpsa ~ ., data = prostate)\
+> g7<-step(g.full, direction = "both")\
+Start:  AIC=-58.32\
+lpsa ~ lcavol + lweight + age + lbph + svi + lcp + gleason + \
+    pgg45\
+\
+          Df Sum of Sq    RSS     AIC\
+- gleason  1    0.0412 44.204 -60.231\
+- pgg45    1    0.5258 44.689 -59.174\
+- lcp      1    0.6740 44.837 -58.853\
+<none>                 44.163 -58.322\
+- age      1    1.5503 45.713 -56.975\
+- lbph     1    1.6835 45.847 -56.693\
+- lweight  1    3.5861 47.749 -52.749\
+- svi      1    4.9355 49.099 -50.046\
+- lcavol   1   22.3721 66.535 -20.567\
+\
+Step:  AIC=-60.23\
+lpsa ~ lcavol + lweight + age + lbph + svi + lcp + pgg45\
+\
+          Df Sum of Sq    RSS     AIC\
+- lcp      1    0.6623 44.867 -60.789\
+<none>                 44.204 -60.231\
+- pgg45    1    1.1920 45.396 -59.650\
+- age      1    1.5166 45.721 -58.959\
+- lbph     1    1.7053 45.910 -58.560\
++ gleason  1    0.0412 44.163 -58.322\
+- lweight  1    3.5462 47.750 -54.746\
+- svi      1    4.8984 49.103 -52.037\
+- lcavol   1   23.5039 67.708 -20.872\
+\
+Step:  AIC=-60.79\
+lpsa ~ lcavol + lweight + age + lbph + svi + pgg45\
+\
+          Df Sum of Sq    RSS     AIC\
+- pgg45    1    0.6590 45.526 -61.374\
+<none>                 44.867 -60.789\
++ lcp      1    0.6623 44.204 -60.231\
+- age      1    1.2649 46.131 -60.092\
+- lbph     1    1.6465 46.513 -59.293\
++ gleason  1    0.0296 44.837 -58.853\
+- lweight  1    3.5647 48.431 -55.373\
+- svi      1    4.2503 49.117 -54.009\
+- lcavol   1   25.4189 70.285 -19.248\
+\
+Step:  AIC=-61.37\
+lpsa ~ lcavol + lweight + age + lbph + svi\
+\
+          Df Sum of Sq    RSS     AIC\
+<none>                 45.526 -61.374\
+- age      1    0.9592 46.485 -61.352\
++ pgg45    1    0.6590 44.867 -60.789\
++ gleason  1    0.4560 45.070 -60.351\
++ lcp      1    0.1293 45.396 -59.650\
+- lbph     1    1.8568 47.382 -59.497\
+- lweight  1    3.2251 48.751 -56.735\
+- svi      1    5.9517 51.477 -51.456\
+- lcavol   1   28.7665 74.292 -15.871\
+> #Starting from the full model, the AIC value was -58.32. The predictors gleason, pgg45, and lcp\
+> #were then removed stepwise, respectively, according to the AIC value that would result when\
+> #each is removed. According to the stepwise method with AIC, the best subset for the model is \
+> #\{lcavol, lweight, lbph, svi, age\}. This model is similar to the result using AIC criterion, but\
+> #the predictor variable age is included here. \
+> \
+> #(c): Adjusted R^2\
+> plot(2:9, rs$adjr2, main = "Adjusted R^2 against # of predictors", \
++      xlab = "Number of Predictors (including intercept)", ylab = "Adjusted R^2", type = "l")\
+> #The Adjusted R^2 values increase on the interval [2,8], and decreases from (8,9]. Therefore, the\
+> #maximum Adjusted R^2 value occurs at p = 8. Thus, according to the adjusted R^2 criterion, the\
+> #optimal number of predictor variables for the model is 7 (since the intercept term is included).\
+> \
+> #If we refer to the Best Subsets table (bs) above, the best subset of 7 predictor variables is\
+> #\{lcavol, lweight, age, lbph, svi, lcp, pgg45\}. \
+> \
+> #(d): Mallow's Cp\
+> #Mallow's Cp value for this data was made available from the regsubsets function above.\
+> #We want to find the model where Cp is approximately equal to p (number of predictors).\
+> #We will plot the Mallow's Cp values against p (number of predictors) and fit a line to the plot.\
+> #The value of p corresponding to the data point with the smallest distance from the line should\
+> #be the optimal number of predictor variables according to Mallow's Cp criterion.\
+> plot(2:9, rs$cp, main = "Mallow's Cp against # of predictors", \
++      xlab = "Number of predictors (including intercept)", ylab = "Mallow's Cp")\
+> abline(0,1)\
+> #Because p = 9 is the full model, it will always be on the line since Cp = SSEp/MSE + 2p - n.\
+> #Variable selection would be redundant if the full model was the optimal model, so we will\
+> #assume that p = 9 is not the p we seek. The next closest data point occurs at p = 6.\
+> #Thus, the number of predictors in the best subset is 5, according to Mallow's Cp criterion.\
+> #Referring to our the Best Subset (bs) data table, the best subset with 5 predictor variables is\
+> #\{lcavol, lweight, age, lbph, svi\}.\
+> #All graphics/plots for Part 1:\
+> layout(matrix(c(1,0,2,3), 2,2, byrow = TRUE), widths = c(1,1), heights = c(1,1))\
+> plot(2:9, AIC.p , main = "AIC against # of Predictors",\
++      xlab = "(p) Number of Predictors (including the intercept)", ylab = "AIC")\
+> plot(2:9, rs$adjr2, main = "Adjusted R^2 against # of predictors", \
++      xlab = "Number of Predictors (including intercept)", ylab = "Adjusted R^2", type = "l")\
+> plot(2:9, rs$cp, main = "Mallow's Cp against # of predictors", \
++      xlab = "Number of predictors (including intercept)", ylab = "Mallow's Cp")\
+> abline(0,1)\
+> #Part 2\
+> library(MASS)\
+> set.seed(1) #setting a random seed for reproducibility\
+> partition<-sample(2, nrow(prostate), replace = TRUE, prob = c(0.5, 0.5))\
+> train.data<-prostate[partition==1,]\
+> test.data<-prostate[partition==2,]\
+> train<-scale(train.data)\
+> test<-scale(test.data)\
+> g.ridge<-lm.ridge(train[, 9] ~ train[, -9], lambda = c(seq(0, 500, 0.01)))\
+> par(mfrow=c(1,1))\
+> matplot(g.ridge$lambda, t(g.ridge$coef), type = "l", lty = 1, xlab = expression(lambda),\
++         ylab = expression(hat(beta)))\
+> select(g.ridge)\
+modified HKB estimator is 4.367276 \
+modified L-W estimator is 3.161761 \
+smallest value of GCV  at 9.52 \
+> #Using generalized cross-validation (GCV), a suitable lambda is 9.52. The coefficients do\
+> #appear to begin to stabilize and converge to Beta = 0 around that value.\
+> coef(g.ridge)[953,]\
+                    train[, -9]lcavol train[, -9]lweight     train[, -9]age    train[, -9]lbph \
+     -1.173288e-16       4.344016e-01       1.489157e-01      -1.258727e-01       1.740786e-01 \
+    train[, -9]svi     train[, -9]lcp train[, -9]gleason   train[, -9]pgg45 \
+      1.748331e-01       7.557852e-02       4.372846e-02       1.281241e-01 \
+> \
+> train.coeff<-coef(g.ridge)[953,] #GCV lambda = 9.52, variance = 0.01.\
+> \
+> y.train<-train[,9]\
+> y.test<-test[,9]\
+> x.train<-train[,-9]\
+> x.test<-test[,-9]\
+> k<-nrow(test.data)\
+> \
+> g.ridge2<-lm.ridge(y.train ~ x.train, lambda = 9.52)\
+> b0.ridge<-mean(train.data[,9])  #Since intercept excluded in ridge regression\
+> pred.value<-scale(test[,1:8],center = FALSE, scale = g.ridge2$scales)%*%g.ridge2$coef\
+> fit.values<-x.test%*%coef(g.ridge2)[2:9]\
+> for(i in 1:k) \{SSE = sum(fit.values[i] - (test[i,9] + b0.ridge))^2\}\
+> MSE = SSE/k\
+> #The problem doesn't ask for this, but I'm going to compare the MSE with the MSE for the OLS model.\
+> g.ols<-lm(y.train ~ x.train)\
+> fit.ols<-x.test%*%coef(g.ols)[2:9]\
+> fit.ols2<-coef(g.ols)[1] + (coef(g.ols)[2])*x.test[,1] + (coef(g.ols)[3])*x.test[,2] +\
++   (coef(g.ols)[4])*x.test[,3] + (coef(g.ols)[5])*x.test[,4] + (coef(g.ols)[6])*x.test[,5] +\
++   (coef(g.ols)[7])*x.test[,6] + (coef(g.ols)[8])*x.test[,7] + (coef(g.ols)[9])*x.test[,8]\
+> coeff.ols<-coef(g.ols)\
+> b0.hat<-coeff.ols[1] \
+> SSE.ols<-sum((y.test - fit.ols - b0.hat)^2)\
+> MSE.ols<-SSE.ols/k\
+> #MSE.ols < MSE.ridge; thus, our choice of lamba is sufficient in that the model with bias fits\
+> #the data better than the unbiased OLS mode.\
+> \
+> #An alternative way to do Part 2:\
+> #Using glmnet package for this alternative method.\
+> library(glmnet)\
+> x<-model.matrix(lpsa ~., data = prostate)[,-1]\
+> y<-prostate$lpsa\
+> #We first fit the ridge regression model:\
+> library(glmnet)\
+> grid=10^seq(10,-2,length=100)\
+> ridge.mod<-glmnet(x,y,alpha=0,lambda=grid) #alpha=0 calls for Ridge Regression\
+> set.seed(1) #setting a random seed for reproducibility\
+> trainx<-sample(1:nrow(x), nrow(x)/2)\
+> testx<-(-trainx)\
+> y.testx<-y[testx]\
+> #Want to find a suitable lambda using cross validation:\
+> set.seed(1)\
+> cv<-cv.glmnet(x[trainx ,],y[trainx],alpha=0)\
+> plot(cv)\
+> bestlam<-min(cv$lambda)\
+> bestlam  #We therefore see that the best lambda that results when using the smallest cross\
+[1] 0.07824837\
+> #validation error is 0.078243837\
+> #We then fit a ridge regression model on the training set, and subsequently evaluate the MSE on\
+> #the test set, using the best lambda value (above).\
+> ridge.mod<-glmnet(x[trainx,],y[trainx],alpha=0,lambda=grid, thresh = 1e-12)\
+> ridge.pred<-predict(ridge.mod, s=bestlam, newx=x[testx,]) \
+> mean((ridge.pred - y.testx)^2)\
+[1] 0.8678651\
+> #MSE on the test set, using the ridge regression estimates is 0.8678651\
+> \
+> #If we were to use a lambda = 0, it would be equivalent to fitting the OLS model.\
+> #On the otherhand, if we fit for very large values of lambda (--> infinity), it is equivalent \
+> #to fitting the null model; that is, a model with only an intercept term.\
+> #Let's do this to compare the mean squared error in each case, so that we may validate our\
+> #choice of lambda:\
+> ridge.pred.2<-predict(ridge.mod, s=0, newx=x[testx,]) #lambda = 0: OLS model\
+> mean((ridge.pred.2 - y.testx)^2)  \
+[1] 0.8722847\
+> #MSE for null model = 0.8722847, which is slightly greater than our MSE with best lambda value.\
+> #There always exists a value lambda for which the MSE of the ridge model is less than the MSE of \
+> #the OLS model. This shows that our value of lambda satisfies this.\
+> \
+> ridge.pred.3<-predict(ridge.mod, s=1e10, newx=x[testx,]) #very large lambda --> null model\
+> mean((ridge.pred.3 - y.testx)^2)  \
+[1] 1.753015\
+> #MSE for the model approaching the null model is greater than the MSE for the ridge model.\
+> \
+> #Thus, our choice of lambda is sufficient.}

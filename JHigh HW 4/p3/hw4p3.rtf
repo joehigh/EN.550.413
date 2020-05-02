@@ -1,0 +1,314 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1504\cocoasubrtf600
+{\fonttbl\f0\fnil\fcharset0 Menlo-Regular;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;\csgray\c100000;}
+\margl1440\margr1440\vieww10800\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs16 \cf0 > #Problem 3\
+> library("faraway")\
+> data(pima)\
+> \
+> \
+> #Part 1\
+> summary(pima)\
+    pregnant         glucose        diastolic         triceps         insulin           bmi       \
+ Min.   : 0.000   Min.   :  0.0   Min.   :  0.00   Min.   : 0.00   Min.   :  0.0   Min.   : 0.00  \
+ 1st Qu.: 1.000   1st Qu.: 99.0   1st Qu.: 62.00   1st Qu.: 0.00   1st Qu.:  0.0   1st Qu.:27.30  \
+ Median : 3.000   Median :117.0   Median : 72.00   Median :23.00   Median : 30.5   Median :32.00  \
+ Mean   : 3.845   Mean   :120.9   Mean   : 69.11   Mean   :20.54   Mean   : 79.8   Mean   :31.99  \
+ 3rd Qu.: 6.000   3rd Qu.:140.2   3rd Qu.: 80.00   3rd Qu.:32.00   3rd Qu.:127.2   3rd Qu.:36.60  \
+ Max.   :17.000   Max.   :199.0   Max.   :122.00   Max.   :99.00   Max.   :846.0   Max.   :67.10  \
+    diabetes           age             test      \
+ Min.   :0.0780   Min.   :21.00   Min.   :0.000  \
+ 1st Qu.:0.2437   1st Qu.:24.00   1st Qu.:0.000  \
+ Median :0.3725   Median :29.00   Median :0.000  \
+ Mean   :0.4719   Mean   :33.24   Mean   :0.349  \
+ 3rd Qu.:0.6262   3rd Qu.:41.00   3rd Qu.:1.000  \
+ Max.   :2.4200   Max.   :81.00   Max.   :1.000  \
+> #Looking at the summary, we see that there are several predictor variables that take on the value 0.\
+> #For the variables glucose, diastolic, triceps, insulin, and bmi, 0 is not a realistic value.\
+> #Indeed, if a human being had a blood glucose concentration of 0, they wouldn't be alive. Your\
+> #body absolutely requires glucose to produce ATP to do things like live. Similarly, for insulin.\
+> #Insulin is what facilitates glucose uptake into every eukaryotic cell, and although a diabetes \
+> #test is testing for low insulin levels, it certainly won't be 0 for any living human being. \
+> #The diastolic variable must represent blood pressure. If someone had a blood pressure of 0,\
+> #they wouldn't be alive to test for diabetes. A blood pressure value of 0 means that there is no\
+> #blood flow and thus no transport of nutrients (such as glucose!) into cells.\
+> #The tricep variable represents the tricep skinfold thickness (in millimeters, a measure of length).\
+> #While it is true that length can take on the value 0, the tricep skinfold thickness cannot\
+> #for a living person. As long as there is skin on a person's body, that value will be greater\
+> #than 0. It is also a common (proportional) measure for subcutaneous fat, which also cannot be 0.\
+> #bmi = body mass index = mass(or weight) to height ratio - bmi = 0 means that, that person \
+> #has a mass of 0 units, or weighs 0 units. Clearly, this is not possible. \
+> #These values are probably data entry errors. The values for these variables may not have \
+> #been known at the time measurements were taken, so they were errorneously recorded as 0.\
+> \
+> #We will have to remove these observations from consideration if we want to continue working\
+> #with all of the predictor variables.\
+> \
+> #Part 2\
+> pima.df<-pima[!(pima$glucose==0 | pima$diastolic==0 | pima$triceps==0 | pima$insulin==0 | pima$bmi==0),]\
+> logit.full<-glm(test ~ ., family = binomial(link = logit), data = pima.df)\
+> summary(logit.full)\
+\
+Call:\
+glm(formula = test ~ ., family = binomial(link = logit), data = pima.df)\
+\
+Deviance Residuals: \
+    Min       1Q   Median       3Q      Max  \
+-2.7823  -0.6603  -0.3642   0.6409   2.5612  \
+\
+Coefficients:\
+              Estimate Std. Error z value Pr(>|z|)    \
+(Intercept) -1.004e+01  1.218e+00  -8.246  < 2e-16 ***\
+pregnant     8.216e-02  5.543e-02   1.482  0.13825    \
+glucose      3.827e-02  5.768e-03   6.635 3.24e-11 ***\
+diastolic   -1.420e-03  1.183e-02  -0.120  0.90446    \
+triceps      1.122e-02  1.708e-02   0.657  0.51128    \
+insulin     -8.253e-04  1.306e-03  -0.632  0.52757    \
+bmi          7.054e-02  2.734e-02   2.580  0.00989 ** \
+diabetes     1.141e+00  4.274e-01   2.669  0.00760 ** \
+age          3.395e-02  1.838e-02   1.847  0.06474 .  \
+---\
+Signif. codes:  0 \'91***\'92 0.001 \'91**\'92 0.01 \'91*\'92 0.05 \'91.\'92 0.1 \'91 \'92 1\
+\
+(Dispersion parameter for binomial family taken to be 1)\
+\
+    Null deviance: 498.10  on 391  degrees of freedom\
+Residual deviance: 344.02  on 383  degrees of freedom\
+AIC: 362.02\
+\
+Number of Fisher Scoring iterations: 5\
+\
+> #For each level i of predictor variable, the number of trials, m_i = 1 (i.e. "small"). Thus, we\
+> #have a sparse distribution of data and therfore the model deviance will not be a good approximation\
+> #for goodness-of-fit measure. We will have to use other means to measure the fit of the data,\
+> #such as the Hosmer-Lemeshow test or a variant of this test.\
+> \
+> pregnant<-pima.df$pregnant\
+> glucose<-pima.df$glucose\
+> diastolic<-pima.df$diastolic\
+> triceps<-pima.df$triceps\
+> insulin<-pima.df$insulin\
+> bmi<-pima.df$bmi\
+> diabetes<-pima.df$diabetes\
+> age<-pima.df$age\
+> test<-pima.df$test\
+> \
+> #Part 3\
+> summary(logit.full)\
+\
+Call:\
+glm(formula = test ~ ., family = binomial(link = logit), data = pima.df)\
+\
+Deviance Residuals: \
+    Min       1Q   Median       3Q      Max  \
+-2.7823  -0.6603  -0.3642   0.6409   2.5612  \
+\
+Coefficients:\
+              Estimate Std. Error z value Pr(>|z|)    \
+(Intercept) -1.004e+01  1.218e+00  -8.246  < 2e-16 ***\
+pregnant     8.216e-02  5.543e-02   1.482  0.13825    \
+glucose      3.827e-02  5.768e-03   6.635 3.24e-11 ***\
+diastolic   -1.420e-03  1.183e-02  -0.120  0.90446    \
+triceps      1.122e-02  1.708e-02   0.657  0.51128    \
+insulin     -8.253e-04  1.306e-03  -0.632  0.52757    \
+bmi          7.054e-02  2.734e-02   2.580  0.00989 ** \
+diabetes     1.141e+00  4.274e-01   2.669  0.00760 ** \
+age          3.395e-02  1.838e-02   1.847  0.06474 .  \
+---\
+Signif. codes:  0 \'91***\'92 0.001 \'91**\'92 0.01 \'91*\'92 0.05 \'91.\'92 0.1 \'91 \'92 1\
+\
+(Dispersion parameter for binomial family taken to be 1)\
+\
+    Null deviance: 498.10  on 391  degrees of freedom\
+Residual deviance: 344.02  on 383  degrees of freedom\
+AIC: 362.02\
+\
+Number of Fisher Scoring iterations: 5\
+\
+> cor(pima.df)\
+              pregnant   glucose  diastolic   triceps    insulin         bmi     diabetes\
+pregnant   1.000000000 0.1982910  0.2133548 0.0932094 0.07898363 -0.02534728  0.007562116\
+glucose    0.198291043 1.0000000  0.2100266 0.1988558 0.58122301  0.20951592  0.140180180\
+diastolic  0.213354775 0.2100266  1.0000000 0.2325712 0.09851150  0.30440337 -0.015971104\
+triceps    0.093209397 0.1988558  0.2325712 1.0000000 0.18219906  0.66435487  0.160498526\
+insulin    0.078983625 0.5812230  0.0985115 0.1821991 1.00000000  0.22639652  0.135905781\
+bmi       -0.025347276 0.2095159  0.3044034 0.6643549 0.22639652  1.00000000  0.158771043\
+diabetes   0.007562116 0.1401802 -0.0159711 0.1604985 0.13590578  0.15877104  1.000000000\
+age        0.679608470 0.3436415  0.3000389 0.1677611 0.21708199  0.06981380  0.085029106\
+test       0.256565956 0.5157027  0.1926733 0.2559357 0.30142922  0.27011841  0.209329511\
+                 age      test\
+pregnant  0.67960847 0.2565660\
+glucose   0.34364150 0.5157027\
+diastolic 0.30003895 0.1926733\
+triceps   0.16776114 0.2559357\
+insulin   0.21708199 0.3014292\
+bmi       0.06981380 0.2701184\
+diabetes  0.08502911 0.2093295\
+age       1.00000000 0.3508038\
+test      0.35080380 1.0000000\
+> #The marginal critical z value for the diastolic predictor is -.120, giving a p-value of 0.90446.\
+> #Under the null hypothesis that the coefficient for diastolic = 0, we accept the null at all\
+> #significance levels. That is, diastolic is not significant in the full logistic regression model.\
+> #Moreover, referring to the correlation matrix for the variables in the model, we see that \
+> #corr(diastolic, test) = 0.1926733 (>0) and are therefore weakly correlated. Thus, we can \
+> #conclude that diastolic is not statistically significant.\
+> \
+> #The parameters (coefficients; excluding the intercept term) measure the degree of \
+> #association between the probability of the event occuring and the value of its predictor \
+> #variable. Because this is a logistic regression model, the degree of association depends on\
+> #the location of the predictor value. However, we can still infer whether or not the probability  \
+> #of the event is increasing or decreasing depending on the sign of the coefficient.\
+> #Hence, because the coefficient of diastolic is -0.001420 < 0, we can conclude that the higher\
+> #a given woman's diastolic blood pressure, the lower the probability that given woman will \
+> #test positive for diabetes. Thus, the answer to the question is: According to the full model,\
+> #women who test positive for diabetes do not, in general, have high diastolic blood pressure.\
+> \
+> #The answers to these questions are seemingly contradictory because on one hand we have shown\
+> #that the diastolic and test are positively correlated; on the otherhand, we also see that the\
+> #coefficient for diastolic is negative, and hence a negative relationship between diastolic\
+> #and test. Superficially, this appears to be a contradiction. However, it is most likely the \
+> #case that at least one of the other predictor variables in the model are highly correlated \
+> #(and hence statistically significant) with test and correlated with diastolic. It is clear \
+> #from the correlation matrix that at very large values of diastolic, it will start to have a\
+> #positive effect on test. In terms of a Real Analysis course: There exists some large N such that\
+> #when n > N, diastolic_n begins to have positive relationship on test (If diastolic were a seq).\
+> \
+> #Part 4\
+> logit.mod2<-glm(test ~ diastolic + bmi + age, family = binomial(link = logit), data = pima.df)\
+> #Because the m_i are all small (all = 1), the deviance, nor the scaled the deviance, can be used\
+> #to compare the two models since the partial deviance will not be chi-squared distributed.\
+> #We can, however, use other means of model comparison. I will compare the AIC values for each to\
+> #start.\
+> summary(logit.mod2)\
+\
+Call:\
+glm(formula = test ~ diastolic + bmi + age, family = binomial(link = logit), \
+    data = pima.df)\
+\
+Deviance Residuals: \
+    Min       1Q   Median       3Q      Max  \
+-2.2342  -0.8128  -0.5234   0.9881   2.2110  \
+\
+Coefficients:\
+             Estimate Std. Error z value Pr(>|z|)    \
+(Intercept) -6.328299   0.899366  -7.036 1.97e-12 ***\
+diastolic    0.003715   0.010378   0.358     0.72    \
+bmi          0.088388   0.018797   4.702 2.57e-06 ***\
+age          0.074799   0.012542   5.964 2.47e-09 ***\
+---\
+Signif. codes:  0 \'91***\'92 0.001 \'91**\'92 0.01 \'91*\'92 0.05 \'91.\'92 0.1 \'91 \'92 1\
+\
+(Dispersion parameter for binomial family taken to be 1)\
+\
+    Null deviance: 498.10  on 391  degrees of freedom\
+Residual deviance: 422.52  on 388  degrees of freedom\
+AIC: 430.52\
+\
+Number of Fisher Scoring iterations: 4\
+\
+> summary(logit.full)\
+\
+Call:\
+glm(formula = test ~ ., family = binomial(link = logit), data = pima.df)\
+\
+Deviance Residuals: \
+    Min       1Q   Median       3Q      Max  \
+-2.7823  -0.6603  -0.3642   0.6409   2.5612  \
+\
+Coefficients:\
+              Estimate Std. Error z value Pr(>|z|)    \
+(Intercept) -1.004e+01  1.218e+00  -8.246  < 2e-16 ***\
+pregnant     8.216e-02  5.543e-02   1.482  0.13825    \
+glucose      3.827e-02  5.768e-03   6.635 3.24e-11 ***\
+diastolic   -1.420e-03  1.183e-02  -0.120  0.90446    \
+triceps      1.122e-02  1.708e-02   0.657  0.51128    \
+insulin     -8.253e-04  1.306e-03  -0.632  0.52757    \
+bmi          7.054e-02  2.734e-02   2.580  0.00989 ** \
+diabetes     1.141e+00  4.274e-01   2.669  0.00760 ** \
+age          3.395e-02  1.838e-02   1.847  0.06474 .  \
+---\
+Signif. codes:  0 \'91***\'92 0.001 \'91**\'92 0.01 \'91*\'92 0.05 \'91.\'92 0.1 \'91 \'92 1\
+\
+(Dispersion parameter for binomial family taken to be 1)\
+\
+    Null deviance: 498.10  on 391  degrees of freedom\
+Residual deviance: 344.02  on 383  degrees of freedom\
+AIC: 362.02\
+\
+Number of Fisher Scoring iterations: 5\
+\
+> #The AIC value for the full model = 362.02\
+> #The AIC value for the reduced model = 430.52\
+> # ==> AIC\{diastolic, bmi, age\} > AIC_full\
+> #Thus, according to AIC criterion, the full model is a better fit than the reduced model with \
+> #\{diastolic, bmi, age\} predictors.\
+> \
+> #Part 5\
+> #diastolic variable is the diastolic blood pressure of a patient \
+> #bmi is the body mass index of a patient\
+> #age is the patient's age\
+> \
+> #There are 2 ways in which we can interpret the coefficients. We can interpret them by their\
+> #effect on the probabilities and by their effect on the odds. \
+> #In particular, the coefficients for diastolic, bmi, and age are all positive. Thus, when\
+> #any one of the predictors is increased by one unit, the probability of testing positive for\
+> #diabetes increases but not necessarily by a proportional amount since it's a logistic function\
+> #and not linear.\
+> #We can also interpret these coefficients in terms of the odds of testing positive for diabetes.\
+> #For each unit increase in diastolic level, the odds of testing positive increases by a factor\
+> #of exp(0.003715) = 1.0037. In other words, the odds of testing positive increases by 0.37% for\
+> #every unit increase in diastolic level.\
+> #For each unit increase in bmi level, the odds of testing positive increases by a factor\
+> #of exp(0.088388) = 1.09241. In other words, the odds of testing positive increases by 9.24% for\
+> #every unit increase in bmi level.\
+> #For each unit increase in age, the odds of testing positive increases by a factor\
+> #of exp(0.074799) = 1.07767. In other words, the odds of testing positive increases by 7.48% for\
+> #every unit increase in age.\
+> #Note: The interpretation of the odds for each predictor variable assumes  that the other\
+> #predictor variables are held constant.\
+> #Part 6\
+> p <- fitted(logit.mod2)\
+> # Proportion in sample that test positive for diabetes\
+> mean(test)\
+[1] 0.3316327\
+> # Using 0.33 as the threshold to calculate sensitivity and specificity:\
+> # pred.prob > 0.33 --> satellite = 1 and pred.prob <= 0.33 --> satellite = 0\
+> pred.prob = as.numeric(p>0.33)\
+> table(test, pred.prob)\
+    pred.prob\
+test   0   1\
+   0 186  76\
+   1  44  86\
+> #ROC method to validate threshold \
+> library(ROCR)\
+> pred.ob <- prediction(p,test)  # arguments = fitted probabilities; observed 0/1\
+> #Plotting ROC curve\
+> plot(performance(pred.ob,"tpr","fpr"))\
+> # Area under the ROC curve\
+> performance(pred.ob,"auc")\
+An object of class "performance"\
+Slot "x.name":\
+[1] "None"\
+\
+Slot "y.name":\
+[1] "Area under the ROC curve"\
+\
+Slot "alpha.name":\
+[1] "none"\
+\
+Slot "x.values":\
+list()\
+\
+Slot "y.values":\
+[[1]]\
+[1] 0.7669407\
+\
+\
+Slot "alpha.values":\
+list()\
+\
+> #a strong ROC curve, so my final model is with a threshold probability of 0.33 with the \
+> #predictors width and color.}

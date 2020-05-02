@@ -1,0 +1,104 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1504
+{\fonttbl\f0\fmodern\fcharset0 CourierNewPSMT;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;\csgray\c100000;}
+\margl1440\margr1440\vieww10800\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs16 \cf0 > #Problem 4\
+> library(aprean3)\
+> data(dse07c)\
+> data(state)\
+> y<-c(dse07c$y, 115)\
+> x1<-c(dse07c$x1, 35)\
+> x2 <- c(dse07c$x2, 12524)\
+> x3 <- c(dse07c$x3, NA)\
+> x4 <- c(dse07c$x4, "No")\
+> x5 <- c(dse07c$x5, 44)\
+> x6 <- c(dse07c$x6, 23)\
+> df <- data.frame(deaths = y, drivers = x1, density = x2, rural.mileage = x3, more.male = x4,\
++                  january.temp = x5, fuel.consumption = x6, state.name = c(state.name, "DC"))\
+> \
+> #Part 1\
+> plot(x1, y, xlab = "Number of Drivers", ylab = "Number of Deaths", main = "#Death vs #Drivers Scatter Plot")\
+> #[1] The relationship between No. of Deaths and No. of Drivers appears to be intrinsically linear\
+> #with departures from a linear relationship. The resulting residuals appear to have a \
+> #non-constant variance. That is, |residuals| increases with x1 (No. of drivers).\
+> #Because of the departure from linearity and nonconstant variance of the residuals,\
+> #it is necessary to transform both the predictor and response variables.\
+> #The plot seems to take on an exponential shape/relationship, implying that a logarithmic\
+> #transformation of both variables should be an appropriate 1st attempt at a transformation to\
+> #improve the model. \
+> #[1]That is, log(deaths) vs log(drivers) will result in a more appropriate model.\
+> \
+> #Part 2\
+> Y<-log(y)\
+> X<-log(x1)\
+> txy<-sum((X-mean(X))*(Y-mean(Y)))\
+> txx<-sum((X-mean(X))^2)\
+> beta1.hat<-txy/txx\
+> beta0.hat<-mean(Y)-beta1.hat*mean(X)\
+> Yhat<-beta0.hat+beta1.hat*X\
+> residuals<-Y-Yhat\
+> n<-length(X)\
+> dof<-n-2\
+> SSE<-sum((residuals)^2)\
+> MSE<-(1/dof)*SSE\
+> std.residuals<-residuals/sqrt(MSE)\
+> layout(matrix(c(1,2), 1, 2, byrow = TRUE), widths = c(1,1), heights = c(1,1))\
+> plot(X,Y, xlab = "X'=log(drivers)", ylab = "Y'=log(deaths)", main = "Transformed Regression Plot")\
+> curve(beta0.hat + beta1.hat*x, seq(min(X), max(Y), by=1), add=TRUE)\
+> plot(Yhat,std.residuals, xlab = "Fitted Values", ylab="Residuals", main="Residual Plot against Fit")\
+> curve(0+0*x, seq(min(Yhat), max(std.residuals)),add = TRUE, lty=2, col="red")\
+> #The logarithmic transformation of the data has clearly resulted in a more linear relation ship.\
+> #The residual plot against the fitted values shows strong signs of constant variance.\
+> \
+> #[1]The 2 data points with the greatest distance, approximately 3 units, below the y=0 line in the\
+> #residual plot appear to be obvious outlier candidates.\
+> #Let's check to see if this is the case.\
+> hi<-(1/n)+(((X-mean(X))^2)/(txx))\
+> exstd.residuals<-residuals*((n-3)/(SSE*(1-hi)-(residuals)^2))^(1/2)\
+> p.values<-2*pt(abs(exstd.residuals), df = n-3, lower.tail = FALSE)\
+> #Outlier Test with No corrections (i.e. Bonferroni Correction nor BH procedure not implemented)\
+> alpha<-0.05\
+> reject<-p.values < alpha\
+> summary(reject)\
+   Mode   FALSE    TRUE    NA's \
+logical      49       2       0 \
+> plot(p.values, col=ifelse(reject, "red", "black"), main = "Outlier Test")\
+> #With no correction procedures done, the test shows 2 potential outliers. The red-colored points are \
+> #the 2 potential outliers. The same 2 candidate outliers in the residual plot as suspected.\
+> \
+> #Outlier Test under Bonferroni Correction procedure\
+> reject.Bf<-p.values < alpha/n\
+> summary(reject.Bf)\
+   Mode   FALSE    NA's \
+logical      51       0 \
+> plot(p.values, col=ifelse(reject.Bf, "red", "black"), main = "Outlier Test under Bonferroni")\
+> #No red data points.\
+> #Thus, under the Bonferroni Correction procedure, there are no potential outliers in the data\
+> \
+> #Outlier Test under Benjamini-Hochberg procedure\
+> index<-(1:n)\
+> reject.BH<-sort(p.values) < index*alpha/n\
+> summary(reject.BH)\
+   Mode   FALSE    NA's \
+logical      51       0 \
+> plot(p.values, col=ifelse(reject.BH, "red", "black"), main = "Outlier Test under Ben.Hoch")\
+> #No red data points.\
+> #Thus, under the Benjamini-Hochberg procedure, there are no potential outliers in the data\
+> \
+> #Part 3\
+> #It should be clear, intuitively and from the model, that more than just the number of drivers\
+> #on the road in a given state influence the number of car-accident-related fatalities (deaths).\
+> #Many things influence car accident related deaths: number of drivers on the road, number of \
+> #drivers per unit area (density), the weather, drivers under the influence, etc.\
+> #However, when considering the number of drivers on the road influencing the number of deaths,\
+> #it makes the most sense to simultaneously consider the number of drivers per square mile (density).\
+> #Indeed, if there are a greater number of drivers in a SMALLER area, they are more likely to collide.\
+> #If we refer to the dataframe, this is the case: the greater the density the greater the number\
+> #of deaths. Thus, there is a positive relationship between density and number of deaths.\
+> #Similarly, there is a postive relationship between number of drivers and number of deaths.\
+> #Therefore, the "density" variable (x2) should be the additional predictor variable.\
+> #It is likely that the new model, with the additional density predictor variable, will result\
+> #in an increased linear relationship and a reduced number of outliers.}
